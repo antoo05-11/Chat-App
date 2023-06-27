@@ -15,8 +15,12 @@ http.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 })
 
-app.use('/chatbox', (req, res) => {
+app.get('/chatbox', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
+})
+
+app.get('/', (req, res) => {
+    res.redirect('/login');
 })
 
 app.use('/login', (req, res) => {
@@ -37,5 +41,5 @@ app.post('/api/send-message', function (req, res) {
         password
     } = req.body;
     console.log(username + password);
-    var botResponse = "Cảm ơn bạn đã gửi tin nhắn!";
+    res.redirect('/chatbox');
 });

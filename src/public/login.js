@@ -13,19 +13,13 @@ function login() {
             })
         })
         .then(function (response) {
-            return response.json();
-        })
-        .then(function (data) {
-            var botMessage = document.createElement('div');
-            botMessage.classList.add('message', 'bot-message');
-            botMessage.textContent = 'Bot: ' + data.message;
-            chatContainer.appendChild(botMessage);
-
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                
+            }
         })
         .catch(function (error) {
-            // Xử lý lỗi nếu có
             console.error('Error:', error);
         });
-
 }
