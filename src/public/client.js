@@ -1,14 +1,8 @@
 const socket = io()
 
-let name;
-
 let textarea = document.querySelector('#user-textfield')
 let sendButton = document.querySelector('#send-button')
 let messageArea = document.querySelector('.chat-container')
-
-do {
-    name = prompt('Please enter your name: ')
-} while (!name)
 
 textarea.addEventListener('keyup', (e) => {
     if (e.key === "Enter") {
@@ -16,28 +10,58 @@ textarea.addEventListener('keyup', (e) => {
     }
 })
 
-sendButton.addEventListener('click', (e)=>{
-    sendMessage(textarea.value);
-})
-function sendMessage(text) {
-    let msg = {
-        user: name,
-        message: text
+sendButton.addEventListener('click', (e) => {
+    let newMsg = {
+        name: userInfo.username,
+        content: textarea.value
     }
-    appendMessage(msg, 'outgoing');
+
+    sendMessage(newMsg);
+})
+
+function sendMessage(newMsg) {
+    console.log(userInfo);
+    msg = {
+        sender: userInfo.userID,
+        content: newMsg.content
+    }
+
+    socket.emit('new-message', msg);
+    appendMessage(msg);
 }
 
-function appendMessage(msg, type) {
-    let mainDiv = document.createElement('div');
-    let className = type;
-    mainDiv.classList.add(className, 'message');
-
-    let markup = `
-    <h4>${msg.user}</h4>
-    <p>${msg.message}</p>
-    `
-
-    mainDiv.innerHTML = markup;
-
+function appendMessage(msg) {
+    var mainDiv = document.createElement('div');
+    mainDiv.classList.add('message', 'bot-message');
+    if (msg.sender === userInfo.userID)
+        mainDiv.textContent = userInfo.username + ": " + msg.content;
+    else mainDiv.textContent = msg.sender + ": " + msg.content;
+    messageArea.scrollTop = messageArea.scrollHeight;
     messageArea.appendChild(mainDiv);
 }
+
+let userInfo;
+socket.on('user-info', (info) => {
+    userInfo = info;
+})
+
+socket.on('message', (message) => {
+    message.forEach(element => {
+        let msg;
+        if (userInfo.userID === element.sender) {
+            msg = {
+                sender: userInfo.username,
+                content: element.content
+            }
+
+        } else {
+            msg = {
+                sender: element.sender,
+                content: element.content
+            }
+        }
+        appendMessage(msg);
+    });
+});
+
+let currentConversationID = 1;

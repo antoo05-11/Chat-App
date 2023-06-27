@@ -1,3 +1,4 @@
+const socket = io()
 function login() {
     let usernameInput = document.getElementById("username-textfield");
     let passwordInput = document.getElementById("password-textfield");
