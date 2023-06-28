@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/src/public/style.css">
+</head>
+
+<body>
+    <div id="login-form">
+        <div id="username-box" style="margin-bottom: 10px;">
+            <label for="usernameLabel">username</label>
+            <input type="text" name="" id="username-textfield">
+        </div>
+        <div id="password-box" style="margin-bottom: 10px;">
+            <label for="passwordLabel">password</label>
+            <input type="password" name="" id="password-textfield">
+        </div>
+        <button onclick="login()">Log in</button>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/src/public/login.js"></script>
+</body>
+
+</html>
