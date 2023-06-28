@@ -49,25 +49,25 @@ app.post('/api/send-message', function (req, res) {
             if (foundUser) {
                 console.log('Đã tìm thấy người dùng trong cơ sở dữ liệu:', foundUser);
                 res.redirect('/chatbox');
+
                 io.on('connection', (socket) => {
                     socket.emit('user-info', foundUser);
                 })
+
                 let conversation = foundUser.conversation;
-                let message = {
-                    conversationID: conversation[0]
-                }
-
-                Message.find({})
-                    .then((message) => {
-                        io.on('connection', (socket) => {
-                            socket.emit('message', message);
+                conversation.forEach(element => {
+                    Message.find({
+                            conversationID: element
                         })
-                    })
-                    .catch((error) => {
-                        console.error('Lỗi truy vấn dữ liệu:', error);
-                    });
-
-
+                        .then((message) => {
+                            io.on('connection', (socket) => {
+                                socket.emit('message', message);
+                            })
+                        })
+                        .catch((error) => {
+                            console.error('Lỗi truy vấn dữ liệu:', error);
+                        });
+                });
             } else {
                 console.log('Người dùng không tồn tại trong cơ sở dữ liệu');
             }
@@ -79,23 +79,35 @@ app.post('/api/send-message', function (req, res) {
 
 io.on('connection', (socket) => {
     socket.on('new-message', (msg) => {
-        console.log(msg);
+        const currentDate = new Date();
         let newMessage = new Message({
-            conversationID: 1,
+            conversationID: msg.conversationID,
             sender: msg.sender,
             content: msg.content,
-            dateTime: ""
+            dateTime: currentDate.toISOString()
         })
         newMessage.save().then(() => {
                 console.log('Message inserted successfully');
             })
             .catch((error) => {
                 console.error('Failed to insert new message:', error);
-            });;
+            });
     })
 })
 
-
+io.on('connection', (socket) => {
+    socket.on('request-conversation', (conversationID) => {
+        Message.find({
+                conversationID: conversationID
+            })
+            .then((message) => {
+                socket.emit('response-conversation', message);
+            })
+            .catch((error) => {
+                console.error('Lỗi truy vấn dữ liệu:', error);
+            });
+    })
+})
 
 // Database
 const mongoose = require('mongoose');
@@ -116,7 +128,6 @@ const userSchema = new mongoose.Schema({
     password: String,
     conversation: Array
 });
-
 const User = mongoose.model('User', userSchema);
 
 const messageSchema = new mongoose.Schema({
@@ -125,5 +136,4 @@ const messageSchema = new mongoose.Schema({
     sender: Number,
     content: String
 });
-
 const Message = mongoose.model('Message', messageSchema);

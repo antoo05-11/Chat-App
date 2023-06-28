@@ -22,6 +22,7 @@ sendButton.addEventListener('click', (e) => {
 function sendMessage(newMsg) {
     console.log(userInfo);
     msg = {
+        conversationID: currentConversationID,
         sender: userInfo.userID,
         content: newMsg.content
     }
@@ -29,6 +30,47 @@ function sendMessage(newMsg) {
     socket.emit('new-message', msg);
     appendMessage(msg);
 }
+
+let conversationIDList = [];
+
+function createNewChat(conversationID) {
+    let chatListDiv = document.querySelector("#chat-list");
+    var newChatDiv = document.createElement('div');
+    newChatDiv.textContent = "Conversation: " + conversationID;
+    chatListDiv.appendChild(newChatDiv);
+    conversationIDList.push(conversationID);
+
+    newChatDiv.addEventListener('click', (e) => {
+        currentConversationID = conversationID;
+        socket.emit('request-conversation', conversationID);
+        messageArea.replaceChildren();
+    })
+}
+
+socket.on(('response-conversation'), (messages) => {
+    console.log(messages);
+    if (messages.length > 0) {
+        if (messages[0].conversationID === currentConversationID) {
+            messages.forEach(message => {
+                let msg;
+                if (userInfo.userID === message.sender) {
+                    msg = {
+                        sender: userInfo.username,
+                        content: message.content
+                    }
+                } else {
+                    msg = {
+                        sender: message.sender,
+                        content: message.content
+                    }
+                }
+                appendMessage(msg);
+            });
+        }
+    }
+})
+
+let currentConversationID = 1;
 
 function appendMessage(msg) {
     var mainDiv = document.createElement('div');
@@ -40,28 +82,14 @@ function appendMessage(msg) {
     messageArea.appendChild(mainDiv);
 }
 
+// After login, get user info response from server and init conversations list.
 let userInfo;
 socket.on('user-info', (info) => {
     userInfo = info;
+    info.conversation.forEach(conversationID => {
+        console.log(userInfo);
+        if (!conversationIDList.includes(conversationID))
+            createNewChat(conversationID);
+    });
 })
 
-socket.on('message', (message) => {
-    message.forEach(element => {
-        let msg;
-        if (userInfo.userID === element.sender) {
-            msg = {
-                sender: userInfo.username,
-                content: element.content
-            }
-
-        } else {
-            msg = {
-                sender: element.sender,
-                content: element.content
-            }
-        }
-        appendMessage(msg);
-    });
-});
-
-let currentConversationID = 1;

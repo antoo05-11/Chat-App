@@ -57,3 +57,21 @@
 #login-form {
     text-align: center;
 }
+
+.message {
+    background-color: #f1f1f1;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.user-message {
+    background-color: #dcf8c6;
+}
+
+.bot-message {
+    background-color: #fff;
+}
+
+.input-container {
+    margin-top: 10px;
+}
