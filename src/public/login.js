@@ -1,12 +1,4 @@
-const username = localStorage.getItem('username');
-const password = localStorage.getItem('password');
-
-if (username && password) {
-    //window.location.href = '/chatbox';
-} else {
-
-}
-
+var user;
 function login() {
     let usernameInput = document.getElementById("username-textfield");
     let passwordInput = document.getElementById("password-textfield");
@@ -22,16 +14,22 @@ function login() {
             })
         })
         .then(function (response) {
-            if (response.redirected) {
-                localStorage.setItem('username', username);
-                localStorage.setItem('password', password);
-                window.location.href = response.url;
-                console.log(response.url);
-            } else {
-
-            }
+            response.json()
+                .then(function (data) {
+                    if (response.status === 200) {
+                        localStorage.setItem('token', data.accessToken);
+                        user = data.user;
+                        window.location.href = '/chat';
+                    } else {
+                    
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Error:', error);
+                });
         })
         .catch(function (error) {
             console.error('Error:', error);
         });
+
 }

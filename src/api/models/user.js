@@ -15,6 +15,9 @@ const userSchema = mongoose.Schema({
         enum: ["user", "admin"],
         default: "user",
     },
+    conversation: {
+        type: Array,
+    }
 });
 
 export default mongoose.model("User", userSchema);

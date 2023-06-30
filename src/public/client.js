@@ -1,4 +1,37 @@
 const socket = io()
+const token = localStorage.getItem('token');
+if (token) {
+    console.log(token);
+    console.log(user);
+} else {
+
+}
+
+fetch('/api/chat', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            accessToken: token
+        })
+    })
+    .then(function (response) {
+        response.json()
+            .then(function (data) {
+                if (response.status === 200) {
+                    console.log(data);
+                } else {
+
+                }
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+            });
+    })
+    .catch(function (error) {
+        console.error('Error:', error);
+    });
 
 let textarea = document.querySelector('#user-textfield')
 let sendButton = document.querySelector('#send-button')

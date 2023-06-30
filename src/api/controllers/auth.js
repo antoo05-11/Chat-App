@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import User from "../models/user";
 import HttpException from "../exceptions/http-exception";
 import jwt from "jsonwebtoken";
+import io from "../../server";
 
 const genToken = (user, expiresIn = "7d") => {
     return jwt.sign({
@@ -36,8 +37,8 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({
         username
     });
-
     if (!user) throw new HttpException(404, "User not found");
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new HttpException(400, "Incorrect password");
 
@@ -51,7 +52,6 @@ export const login = async (req, res, next) => {
         secure: false,
         path: "/",
     });
-
     res.status(200).json({
         user,
         accessToken

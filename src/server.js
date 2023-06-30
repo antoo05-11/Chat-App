@@ -48,6 +48,9 @@ app.use("/api", router);
 app.use('/login', (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
 })
+app.use('/chat', (req, res) => {
+    res.sendFile(__dirname + '/public/chat.html')
+})
 
 // Database
 const mongoose = require('mongoose');
