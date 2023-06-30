@@ -11,7 +11,7 @@ function login() {
     let usernameInput = document.getElementById("username-textfield");
     let passwordInput = document.getElementById("password-textfield");
 
-    fetch('/api/login', {
+    fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

@@ -1,19 +1,15 @@
 import express from "express";
-
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import router from "./api/routes";
+import bodyParser from "body-parser";
 
 dotenv.config();
 
-import log from "console";
-import cors from "cors";
-import router from "./api/routes";
-const bodyParser = require('body-parser');
-
-
-const app = express();
+var http = require('http');
+var app = express();
+var server = http.createServer(app);
 
 // Register middleware
 app.use(express.json());
@@ -25,32 +21,48 @@ app.use(cors());
 
 // Error handler
 app.use((err, req, res, next) => {
-    const { status = 404, message = "Error" } = err;
-    res.status(status).json({ message });
+    const {
+        status = 404, message = "Error"
+    } = err;
+    res.status(status).json({
+        message
+    });
 });
 
-http.listen(PORT, () => {
+const PORT = process.env.PORT || 5050;;
+server.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 })
-
-app.use("/api", router);
+var io = require('socket.io')(server);
+export default io;
 
 app.get("/", (req, res) => {
-    res.status(200).json({ success: true, message: "Welcome to express" });
-  });
+    res.status(200).json({
+        success: true,
+        message: "Welcome to express"
+    });
+});
 
-// app.get('/chatbox', (req, res) => {
-//     res.sendFile(__dirname + '/public/index.html');
-// })
-
-// app.get('/', (req, res) => {
-//     res.redirect('/login');
-// })
+app.use("/api", router);
 
 app.use('/login', (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
 })
 
+// Database
+const mongoose = require('mongoose');
+(async () => {
+    mongoose.connect('mongodb://localhost:27017/chat-app', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        })
+        .then(() => {
+            console.log('Kết nối đến MongoDB thành công');
+        })
+        .catch((error) => {
+            console.error('Lỗi kết nối đến MongoDB:', error);
+        });
+})();
 
 // Socket for message rooms.
 // const io = require('socket.io')(http);
@@ -132,19 +144,3 @@ app.use('/login', (req, res) => {
 //             });
 //     })
 // })
-
-// Database
-const mongoose = require('mongoose');
-
-(async () => {
-    mongoose.connect('mongodb://localhost:27017/chat-app', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        })
-        .then(() => {
-            console.log('Kết nối đến MongoDB thành công');
-        })
-        .catch((error) => {
-            console.error('Lỗi kết nối đến MongoDB:', error);
-        });
-})();
