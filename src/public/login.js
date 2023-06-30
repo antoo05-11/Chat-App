@@ -2,7 +2,7 @@ const username = localStorage.getItem('username');
 const password = localStorage.getItem('password');
 
 if (username && password) {
-    window.location.href = '/chatbox';
+    //window.location.href = '/chatbox';
 } else {
 
 }
@@ -11,7 +11,7 @@ function login() {
     let usernameInput = document.getElementById("username-textfield");
     let passwordInput = document.getElementById("password-textfield");
 
-    fetch('/api/send-message', {
+    fetch('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
