@@ -18,11 +18,10 @@ export const verifyToken = async (req, res, next) => {
         // Verify Token
         const decoded = jwt.verify(token, secretKey);
         const user = await User.findById(decoded.id);
-
+ 
         if (!user) {
             throw new HttpException(401, "Authentication failed!");
         }
-
         req.user = user;
         next();
     } catch (e) {

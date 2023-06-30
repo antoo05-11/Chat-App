@@ -31,7 +31,7 @@ function sendMessage(newMsg) {
     console.log(userInfo);
     msg = {
         conversationID: currentConversationID,
-        sender: userInfo.userID,
+        sender: userInfo.id,
         content: newMsg.content
     }
 
@@ -62,7 +62,7 @@ socket.on(('response-conversation'), (messages) => {
         if (messages[0].conversationID === currentConversationID) {
             messages.forEach(message => {
                 let msg;
-                if (userInfo.userID === message.sender) {
+                if (userInfo.id === message.sender) {
                     msg = {
                         sender: userInfo.username,
                         content: message.content
@@ -84,23 +84,14 @@ let currentConversationID = 1;
 function appendMessage(msg) {
     var mainDiv = document.createElement('div');
     mainDiv.classList.add('message', 'bot-message');
-    if (msg.sender === userInfo.userID)
+    if (msg.sender === userInfo.id)
         mainDiv.textContent = userInfo.username + ": " + msg.content;
     else mainDiv.textContent = msg.sender + ": " + msg.content;
     messageArea.scrollTop = messageArea.scrollHeight;
     messageArea.appendChild(mainDiv);
 }
 
-// After login, get user info response from server and init conversations list.
-let userInfo;
-socket.on('user-info', (info) => {
-    userInfo = info;
-    info.conversation.forEach(conversationID => {
-        console.log(userInfo);
-        if (!conversationIDList.includes(conversationID))
-            createNewChat(conversationID);
-    });
-})
+
 
 fetch('/api/chat', {
         method: 'POST',
@@ -118,7 +109,11 @@ fetch('/api/chat', {
         response.json()
             .then(function (data) {
                 if (response.status === 200) {
-                    console.log(data);
+                    userInfo = data;
+                    data.conversation.forEach(conversationID => {
+                        if (!conversationIDList.includes(conversationID))
+                            createNewChat(conversationID);
+                    });
                 } else {
 
                 }

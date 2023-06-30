@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const messageSchema = new mongoose.Schema({
     conversationID: Number,
     dateTime: String,
-    sender: Number,
+    sender: String,
     content: String
 });
 
