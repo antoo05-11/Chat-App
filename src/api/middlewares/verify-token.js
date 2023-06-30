@@ -9,7 +9,7 @@ export const verifyToken = async (req, res, next) => {
         const bearer = "Bearer ";
 
         if (!authHeader || !authHeader.startsWith(bearer)) {
-        throw new HttpException(401, "Access denied. No credentials sent!");
+            throw new HttpException(401, "Access denied. No credentials sent!");
         }
 
         const token = authHeader.replace(bearer, "");
@@ -20,7 +20,7 @@ export const verifyToken = async (req, res, next) => {
         const user = await User.findById(decoded.id);
 
         if (!user) {
-        throw new HttpException(401, "Authentication failed!");
+            throw new HttpException(401, "Authentication failed!");
         }
 
         req.user = user;
@@ -34,7 +34,7 @@ export const verifyToken = async (req, res, next) => {
 export const isAdmin = async (req, res, next) => {
     try {
         if (!req.user.role.includes("admin")) {
-        throw new HttpException(403, "You don't have permission to access!");
+            throw new HttpException(403, "You don't have permission to access!");
         }
         next();
     } catch (e) {

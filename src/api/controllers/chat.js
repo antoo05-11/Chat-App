@@ -1,16 +1,11 @@
 import io from "../../server";
 import HttpException from "../exceptions/http-exception";
 import User from "../models/user";
+import { requestRefreshToken } from "./auth";
 
 export const getAllChats = async (req, res) => {
-    accessToken = req.accessToken;
-    const user = await User.findOne({
-        accessToken
-    });
-    if (!user) throw new HttpException(404, "User not found");
-    
-    res.json(user);
-
+    console.log(req.body);
+    user = req.body.user;
     let conversation = user.conversation;
     conversation.forEach(element => {
         Message.find({
@@ -25,4 +20,4 @@ export const getAllChats = async (req, res) => {
                 console.error('Lỗi truy vấn dữ liệu:', error);
             });
     });
-};
+}; 
