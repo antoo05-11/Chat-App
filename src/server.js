@@ -1,17 +1,33 @@
 import express from "express";
+
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
+import router from "./api/routes";
+
+dotenv.config();
+
 import log from "console";
 import cors from "cors";
 import router from "./api/routes";
 const bodyParser = require('body-parser');
 
+
 const app = express();
-const http = require('http').createServer(app);
-app.use(bodyParser.json());
 
-const PORT = process.env.PORT || 5050;
+// Register middleware
+app.use(express.json());
+app.use(cookieParser());
 
+// Static files
 app.use("/src/public", express.static('./src/public/'));
 app.use(cors());
+
+// Error handler
+app.use((err, req, res, next) => {
+    const { status = 404, message = "Error" } = err;
+    res.status(status).json({ message });
+});
 
 http.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
@@ -131,5 +147,4 @@ const mongoose = require('mongoose');
         .catch((error) => {
             console.error('Lỗi kết nối đến MongoDB:', error);
         });
-
 })();
