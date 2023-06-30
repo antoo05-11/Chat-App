@@ -3,7 +3,7 @@ import {
 } from "express";
 import {
     getAllNotes
-} from "../controllers/chatBoxController";
+} from "../api/controllers/chatBoxController";
 
 const chatBoxRoute = Router();
 

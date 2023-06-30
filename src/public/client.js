@@ -36,7 +36,8 @@ let conversationIDList = [];
 function createNewChat(conversationID) {
     let chatListDiv = document.querySelector("#chat-list");
     var newChatDiv = document.createElement('div');
-    newChatDiv.textContent = "Conversation: " + conversationID;
+    newChatDiv.classList.add('short-conversation');
+    newChatDiv.textContent = "Conversation " + conversationID;
     chatListDiv.appendChild(newChatDiv);
     conversationIDList.push(conversationID);
 
@@ -92,4 +93,3 @@ socket.on('user-info', (info) => {
             createNewChat(conversationID);
     });
 })
-
