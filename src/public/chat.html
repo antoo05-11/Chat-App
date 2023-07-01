@@ -11,36 +11,35 @@
 </head>
 
 <body>
-    <div class="split left">
-        <div id="avatar">
+    <div class='out-container'>
+        <div class="left">
+            <div id="avatar">
+            </div>
+            <div id="options-list"></div>
+            <button class="btn" type="submit" role="button"><i class="fa fa-comments"></i></button>
+            <button class="btn"><i class="fa fa-cogs"></i></button>
+            <button class="btn" onclick="logout()"><i class="fa fa-sign-out"></i></button>
         </div>
-        <div id="options-list"></div>
-        <button class="btn"><i class="fa fa-comments"></i></button>
-        <button class="btn"><i class="fa fa-cogs"></i></button>
-        <button class="btn" onclick="logout()"><i class="fa fa-sign-out"></i></button>
-    </div>
-    <div class="split middle">
-        <div id="username" style="border-bottom: 1px solid black; text-align: center;"></div>
-        <div id="find-area">
-            <input type="text" name="" id="find-textfield" placeholder="Tìm kiếm"></i>
+        <div class="middle">
+            <div id="username" style="border-bottom: 1px solid black; text-align: center;"></div>
+            <div id="find-area">
+                <input type="text" name="" id="find-textfield" placeholder="Tìm kiếm"></i>
+            </div>
+            <div id="find-list">
+            </div>
+            <div id="chat-list">
+            </div>
         </div>
-        <div id="find-list">
-        </div>
-        <div id="chat-list">
-
-        </div>
-
-
-    </div>
-    <div class="split right">
-        <div class="chat-container">
-            <div class="message bot-message">Bot: Hello! How can I assist you today?</div>
-            <div class="message user-message">User: Hi! I have a question.</div>
-            <div class="message bot-message">Bot: Sure, feel free to ask your question.</div>
-        </div>
-        <div class="user-input">
-            <input type="text" id="user-textfield" placeholder="Type your message here">
-            <button id="send-button">Send</button>
+        <div class="right">
+            <div class="chat-container">
+                <div class="message bot-message">Bot: Hello! How can I assist you today?</div>
+                <div class="message user-message">User: Hi! I have a question.</div>
+                <div class="message bot-message">Bot: Sure, feel free to ask your question.</div>
+            </div>
+            <div class="user-input">
+                <input type="text" id="user-textfield" placeholder="Type your message here">
+                <button id="send-button">Send</button>
+            </div>
         </div>
     </div>
 

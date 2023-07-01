@@ -40,9 +40,17 @@ function createNewChat(conversationID) {
     let chatListDiv = document.querySelector("#chat-list");
     var newChatDiv = document.createElement('div');
     newChatDiv.classList.add('short-conversation');
-    newChatDiv.textContent = "Conversation " + conversationID;
     chatListDiv.appendChild(newChatDiv);
     conversationIDList.push(conversationID);
+
+    let usernameLabelDiv = document.createElement('p');
+    usernameLabelDiv.textContent = "Conversation " + conversationID;
+    let previewChatDiv = document.createElement('p');
+    previewChatDiv.textContent = "Preview chat";
+
+    newChatDiv.appendChild(usernameLabelDiv);
+    newChatDiv.appendChild(previewChatDiv);
+
 
     newChatDiv.addEventListener('click', (e) => {
         currentConversationID = conversationID;
@@ -130,7 +138,7 @@ fetch('/api/chat', {
                         }
                     });
                 } else {
-                    
+
                 }
             })
             .catch(function (error) {

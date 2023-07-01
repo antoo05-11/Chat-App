@@ -1,25 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="/src/public/style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>Login</title>
+    <link href="/src/public/bootstrap_theme/bootstrap.css" rel="stylesheet" type="text/css">
+    <link href="/src/public/login.css" rel="stylesheet">
 </head>
 
-<body>
-    <div id="login-form">
-        <div id="username-box" style="margin-bottom: 10px;">
-            <label for="usernameLabel">username</label>
-            <input type="text" name="" id="username-textfield">
-        </div>
-        <div id="password-box" style="margin-bottom: 10px;">
-            <label for="passwordLabel">password</label>
-            <input type="password" name="" id="password-textfield">
-        </div>
-        <button onclick="login()">Log in</button>
-    </div>
+<body class="text-center">
+    <main class="form-signin">
+        <form>
+            <img class="mb-4" src="/src/public/assets/chat.png" alt="">
+            <h1 class="h3 mb-3 fw-normal">Login</h1>
+            <label for="inputEmail" class="visually-hidden">Username</label>
+            <input type="email" id="username-textfield" class="form-control" placeholder="username" required=""
+                autofocus="">
+            <label for="inputPassword" class="visually-hidden">Password</label>
+            <input type="password" id="password-textfield" class="form-control" placeholder="password" required="">
+            <button class="w-100 btn btn-lg btn-primary" type="submit" onclick="login()">Sign in</button>
+            <p class="mt-5 mb-3 text-muted">UET CodeCamp</p>
+        </form>
+    </main>
+    <script src="/src/public/assets/js/popper.min.js"></script>
+    <script src="/src/public/bootstrap/js/bootstrap.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/src/public/login.js"></script>
 </body>
