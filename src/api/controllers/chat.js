@@ -1,56 +1,66 @@
-import io from "../../server";
-import HttpException from "../exceptions/http-exception";
 import User from "../models/user";
-import {
-    requestRefreshToken
-} from "./auth";
-import Message from "../models/message";
+import Conversation from "../models/conversation";
 
 export const getAllChats = async (req, res) => {
     let user = req.user;
-    let conversation = user.conversation;
     res.status(200).json(user);
-    conversation.forEach(element => {
-        Message.find({
-                conversationID: element
+};
+
+export const addChat = async (req, res) => {
+    const foundUser = await User.findOne({
+        username: req.body.username
+    });
+    let users = [foundUser.id, req.user.id];
+    let conversation = await Conversation.findOne({
+        users: {
+            $all: users
+        }
+    });
+    if (!conversation) {
+        conversation = await Conversation.create({
+            users: users,
+            lastUpdated: ""
+        });
+        await User.findOneAndUpdate({
+                username: foundUser.username
+            }, {
+                $push: {
+                    conversation: conversation._id
+                }
+            }, {
+                new: true
             })
-            .then((message) => {
-                io.on('connection', (socket) => {
-                    socket.emit('message', message);
-                })
+            .then((updatedUser) => {
+                if (updatedUser) {
+                    console.log("User updated successfully:", updatedUser);
+                } else {
+                    console.log("User not found");
+                }
             })
             .catch((error) => {
-                console.error('Lỗi truy vấn dữ liệu:', error);
+                console.error("Failed to update user:", error);
             });
-    });
-    io.on('connection', (socket) => {
-        socket.on('request-conversation', (conversationID) => {
-            Message.find({
-                    conversationID: conversationID
-                })
-                .then((message) => {
-                    socket.emit('response-conversation', message);
-                })
-                .catch((error) => {
-                    console.error('Lỗi truy vấn dữ liệu:', error);
-                });
-        })
-    })
-    io.on('connection', (socket) => {
-        socket.on('new-message', (msg) => {
-            const currentDate = new Date();
-            let newMessage = new Message({
-                conversationID: msg.conversationID,
-                sender: msg.sender,
-                content: msg.content,
-                dateTime: currentDate.toISOString()
+        await User.findOneAndUpdate({
+                username: req.user.username
+            }, {
+                $push: {
+                    conversation: conversation._id
+                }
+            }, {
+                new: true
             })
-            newMessage.save().then(() => {
-                    console.log('Message inserted successfully');
-                })
-                .catch((error) => {
-                    console.error('Failed to insert new message:', error);
-                });
-        })
-    })
-};
+            .then((updatedUser) => {
+                if (updatedUser) {
+                    console.log("User updated successfully:", updatedUser);
+                } else {
+                    console.log("User not found");
+                }
+            })
+            .catch((error) => {
+                console.error("Failed to update user:", error);
+            });
+    }
+    res.status(200).json({
+        conversation
+    });
+}

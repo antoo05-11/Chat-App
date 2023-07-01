@@ -1,16 +1,11 @@
 const socket = io()
-const token = localStorage.getItem('token');
-if (token) {
-    console.log(token);
-} else {
+let token = localStorage.getItem("token");
+var userInfo;
 
-}
-
-
-
-let textarea = document.querySelector('#user-textfield')
-let sendButton = document.querySelector('#send-button')
-let messageArea = document.querySelector('.chat-container')
+let textarea = document.querySelector('#user-textfield');
+let sendButton = document.querySelector('#send-button');
+let messageArea = document.querySelector('.chat-container');
+let usernameDiv = document.querySelector('#username');
 
 textarea.addEventListener('keyup', (e) => {
     if (e.key === "Enter") {
@@ -23,20 +18,20 @@ sendButton.addEventListener('click', (e) => {
         name: userInfo.username,
         content: textarea.value
     }
-
     sendMessage(newMsg);
 })
 
 function sendMessage(newMsg) {
-    console.log(userInfo);
-    msg = {
-        conversationID: currentConversationID,
-        sender: userInfo.id,
-        content: newMsg.content
+    if (newMsg.content.length > 0) {
+        let msg = {
+            conversationID: currentConversationID,
+            sender: userInfo._id,
+            content: newMsg.content
+        }
+        socket.emit('new-message', msg);
+        textarea.value = '';
+        appendMessage(msg);
     }
-
-    socket.emit('new-message', msg);
-    appendMessage(msg);
 }
 
 let conversationIDList = [];
@@ -51,18 +46,22 @@ function createNewChat(conversationID) {
 
     newChatDiv.addEventListener('click', (e) => {
         currentConversationID = conversationID;
-        socket.emit('request-conversation', conversationID);
+        let req = {
+            conversationID: conversationID,
+            requester: userInfo._id
+        }
+        socket.emit('request-conversation', req);
         messageArea.replaceChildren();
     })
 }
 
+
 socket.on(('response-conversation'), (messages) => {
-    console.log(messages);
     if (messages.length > 0) {
         if (messages[0].conversationID === currentConversationID) {
             messages.forEach(message => {
                 let msg;
-                if (userInfo.id === message.sender) {
+                if (userInfo._id === message.sender) {
                     msg = {
                         sender: userInfo.username,
                         content: message.content
@@ -84,25 +83,21 @@ let currentConversationID = 1;
 function appendMessage(msg) {
     var mainDiv = document.createElement('div');
     mainDiv.classList.add('message', 'bot-message');
-    if (msg.sender === userInfo.id)
-        mainDiv.textContent = userInfo.username + ": " + msg.content;
+    if (msg.sender === userInfo._id)
+        mainDiv.textContent = "You: " + msg.content;
     else mainDiv.textContent = msg.sender + ": " + msg.content;
-    messageArea.scrollTop = messageArea.scrollHeight;
     messageArea.appendChild(mainDiv);
+    messageArea.scrollTop = messageArea.scrollHeight;
 }
-
-
 
 fetch('/api/chat', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            user: {
-                username: "",
-                password: ""
-            }
+
         })
     })
     .then(function (response) {
@@ -110,18 +105,140 @@ fetch('/api/chat', {
             .then(function (data) {
                 if (response.status === 200) {
                     userInfo = data;
+                    console.log(usernameDiv);
+                    usernameDiv.textContent = userInfo.username;
+                    socket.emit('add-user', userInfo._id);
                     data.conversation.forEach(conversationID => {
-                        if (!conversationIDList.includes(conversationID))
+                        if (!conversationIDList.includes(conversationID)) {
+                            socket.emit('join-room', 'room-' + conversationID);
+                            socket.on('room-' + conversationID + 'message', (message) => {
+                                let msg;
+                                if (userInfo._id === message.sender) {
+                                    msg = {
+                                        sender: userInfo.username,
+                                        content: message.content
+                                    }
+                                } else {
+                                    msg = {
+                                        sender: message.sender,
+                                        content: message.content
+                                    }
+                                }
+                                appendMessage(msg);
+                            });
                             createNewChat(conversationID);
+                        }
                     });
                 } else {
-
+                    
                 }
             })
             .catch(function (error) {
                 console.error('Error:', error);
+                window.location.href = '/login';
             });
     })
     .catch(function (error) {
         console.error('Error:', error);
     });
+
+let findTextfield = document.querySelector('#find-textfield');
+let findListDiv = document.querySelector('#find-list');
+findTextfield.addEventListener('keyup', (e) => {
+    if (e.keyCode === 13) {
+        findListDiv.replaceChildren();
+        fetch('/api/user/find', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    input: findTextfield.value,
+                })
+            })
+            .then(function (response) {
+                response.json()
+                    .then(function (data) {
+                        if (response.status === 200) {
+                            console.log(data);
+                            data.forEach(user => {
+                                appendFoundUser(user);
+                            });
+                        }
+                    })
+                    .catch(function (error) {
+                        console.error('Error:', error);
+                    });
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+            });
+    }
+})
+
+function appendFoundUser(user) {
+    let foundUserDiv = document.createElement('div');
+    foundUserDiv.classList.add('short-conversation');
+    foundUserDiv.textContent = "Found: " + user.username;
+    findListDiv.appendChild(foundUserDiv);
+
+    foundUserDiv.addEventListener('click', (e) => {
+        fetch('/api/chat/add', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: user.username
+                })
+            })
+            .then(function (response) {
+                response.json()
+                    .then(function (data) {
+                        if (response.status === 200) {
+                            console.log(data);
+                            if (!conversationIDList.includes(data._id)) {
+                                createNewChat(data._id);
+                                currentConversationID = data.id;
+                            } else {
+
+                            }
+                        }
+                    })
+                    .catch(function (error) {
+                        console.error('Error:', error);
+                    });
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+            });
+    })
+}
+
+function logout() {
+    fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(function (response) {
+            response.json()
+                .then(function (data) {
+                    if (response.status === 200) {
+                        localStorage.clear(token);
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Error:', error);
+                });
+        })
+        .catch(function (error) {
+            console.error('Error:', error);
+        });
+}

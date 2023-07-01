@@ -2,6 +2,7 @@ import {
     Router
 } from "express";
 import {
+    addChat,
     getAllChats
 } from "../controllers/chat";
 import {
@@ -11,5 +12,6 @@ import {
 const chatRoute = Router();
 
 chatRoute.post("/", verifyToken, getAllChats);
+chatRoute.post("/add", verifyToken, addChat);
 
 export default chatRoute;

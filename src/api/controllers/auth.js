@@ -2,7 +2,6 @@ import bcrypt from "bcryptjs";
 import User from "../models/user";
 import HttpException from "../exceptions/http-exception";
 import jwt from "jsonwebtoken";
-import io from "../../server";
 
 const genToken = (user, expiresIn = "7d") => {
     return jwt.sign({
@@ -27,7 +26,7 @@ const genRefreshToken = (user, expiresIn = "365d") => {
 };
 
 const refreshTokens = [];
-
+export const sockets = new Map();
 export const login = async (req, res, next) => {
     const {
         username,
@@ -57,6 +56,19 @@ export const login = async (req, res, next) => {
         accessToken
     });
 };
+
+export const loginWithToken = async (req, res) => {
+    console.log(req.user);
+    if (req.user) res.status(200).json(req.user);
+    else res.status(401);
+}
+
+export const logout = async (req, res) => {
+    res.clearCookie('token');
+    res.status(200).json({
+        message: 'Log out successfully'
+    });
+}
 
 export const requestRefreshToken = async (req, res) => {
     const {
