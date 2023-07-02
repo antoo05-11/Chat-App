@@ -1,4 +1,6 @@
 import Message from "../models/message";
+import Conversation from "../models/conversation";
+import User from "../models/user";
 
 const messages = [];
 
@@ -11,13 +13,31 @@ export const appSocket = (io) => {
             socket.join(userID);
         });
 
-        socket.on('request-conversation', (req) => {
+        socket.on('request-conversation', async (req) => {
             let conversationID = req.conversationID;
-            Message.find({
-                    conversationID: conversationID
-                })
-                .then((message) => {
-                    io.to(req.requester).emit('response-conversation', message);
+            await Conversation.findById(conversationID)
+                .then((conversation) => {
+                    Message.find({
+                            conversationID: conversationID
+                        })
+                        .then(async (messages) => {
+                            let usersList = [];
+
+                            for (const userID of conversation.users) {
+                                try {
+                                    const user = await User.findById(userID);
+                                    usersList.push(user);
+                                } catch (error) {
+                                    console.error('Lỗi truy vấn dữ liệu:', error);
+                                }
+                            }
+
+                            io.to(req.requester).emit('response-conversation', {
+                                conversation: conversation,
+                                messages: messages,
+                                users: usersList
+                            });
+                        })
                 })
                 .catch((error) => {
                     console.error('Lỗi truy vấn dữ liệu:', error);
@@ -29,18 +49,31 @@ export const appSocket = (io) => {
                 messages.push(message);
                 let roomID = 'room-' + message.conversationID;
                 socket.broadcast.to(roomID).emit(roomID + 'message', message);
-                const currentDate = new Date();
                 let newMessage = new Message({
                     conversationID: message.conversationID,
                     sender: message.sender,
                     content: message.content,
-                    dateTime: currentDate.toISOString()
+                    dateTime: message.dateTime
                 })
-                newMessage.save().then(() => {
-                        console.log('Message inserted successfully');
-                    })
+                newMessage.save()
                     .catch((error) => {
                         console.error('Failed to insert new message:', error);
+                    });
+
+                let newLastUpdated = newMessage.dateTime;
+                Conversation.findById(newMessage.conversationID)
+                    .then((conversation) => {
+                        if (!conversation) {
+                            console.log('Không tìm thấy đối tượng Conversation');
+                            return;
+                        }
+                        if (newLastUpdated > conversation.lastUpdated || !conversation.lastUpdated) {
+                            conversation.lastUpdated = newLastUpdated;
+                            return conversation.save();
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Lỗi khi tìm kiếm hoặc cập nhật đối tượng Conversation:', error);
                     });
             }
         });

@@ -6,95 +6,181 @@ let textarea = document.querySelector('#user-textfield');
 let sendButton = document.querySelector('#send-button');
 let messageArea = document.querySelector('.chat-container');
 let usernameDiv = document.querySelector('#username');
+let chatListDiv = document.querySelector("#chat-list");
 
 textarea.addEventListener('keyup', (e) => {
-    if (e.key === "Enter") {
-        sendMessage(e.target.value);
+    if (e.keyCode === 13) {
+        sendMessage();
     }
 })
 
 sendButton.addEventListener('click', (e) => {
-    let newMsg = {
-        name: userInfo.username,
-        content: textarea.value
-    }
-    sendMessage(newMsg);
+    sendMessage();
 })
 
-function sendMessage(newMsg) {
-    if (newMsg.content.length > 0) {
+function sendMessage() {
+    if (textarea.value) {
         let msg = {
             conversationID: currentConversationID,
             sender: userInfo._id,
-            content: newMsg.content
+            content: textarea.value,
+            dateTime: new Date().toISOString()
         }
         socket.emit('new-message', msg);
+        conversations.get(currentConversationID).push(msg);
+        initShortConversation(currentConversationID);
         textarea.value = '';
         appendMessage(msg);
     }
 }
 
+let currentConversationID;
 let conversationIDList = [];
+let conversations = new Map();
+let conversationInfos = new Map();
+let shortConversationDivs = new Map();
+let usersList = new Map();
 
-function createNewChat(conversationID) {
-    let chatListDiv = document.querySelector("#chat-list");
-    var newChatDiv = document.createElement('div');
-    newChatDiv.classList.add('short-conversation');
-    chatListDiv.appendChild(newChatDiv);
+function initConversationsList(conversationID) {
+    chatListDiv.replaceChildren();
+
     conversationIDList.push(conversationID);
 
+    let conversationsArray = Array.from(conversationInfos);
+    const compareByLastUpdated = (a, b) => {
+        const lastUpdatedA = a[1].lastUpdated;
+        const lastUpdatedB = b[1].lastUpdated;
+
+        if (lastUpdatedA < lastUpdatedB) {
+            return -1;
+        }
+        if (lastUpdatedA > lastUpdatedB) {
+            return 1;
+        }
+        return 0;
+    };
+    conversationsArray.sort(compareByLastUpdated);
+
+    conversationsArray.forEach(conversationInfo => {
+        let conversation = conversationInfo[1];
+        initShortConversation(conversation._id);
+    });
+}
+
+function initShortConversation(conversationID) {
+    let conversation = conversationInfos.get(conversationID);
+    var newChatDiv = document.createElement('div');
+    newChatDiv.classList.add('short-conversation');
+    chatListDiv.prepend(newChatDiv);
+
+    if (chatListDiv.contains(shortConversationDivs.get(conversationID))) {
+        chatListDiv.removeChild(shortConversationDivs.get(conversationID));
+        if (conversationID === currentConversationID)
+            newChatDiv.classList.add('short-conversation-selected');
+    }
+
+    shortConversationDivs.set(conversationID, newChatDiv);
+
     let usernameLabelDiv = document.createElement('p');
-    usernameLabelDiv.textContent = "Conversation " + conversationID;
+    conversation.users.forEach(userID => {
+        if (userID != userInfo._id) {
+            usernameLabelDiv.textContent += usersList.get(userID).username;
+        }
+    });
+    if (usernameLabelDiv.textContent === '') usernameLabelDiv.textContent = userInfo.username;
+
+    usernameLabelDiv.classList.add('conversation-label')
+
     let previewChatDiv = document.createElement('p');
-    previewChatDiv.textContent = "Preview chat";
+    previewChatDiv.classList.add('preview-label');
+    let messagesArray = Array.from(conversations.get(conversationID));
+    if (messagesArray.length > 0) {
+        const compareByDateTime = (a, b) => {
+            const dateTimeA = a.dateTime;
+            const dateTimeB = b.dateTime;
+
+            if (dateTimeA < dateTimeB) {
+                return 1;
+            }
+            if (dateTimeA > dateTimeB) {
+                return -1;
+            }
+            return 0;
+        };
+        messagesArray.sort(compareByDateTime);
+
+        let lastMessage = messagesArray[0];
+        let sender = usersList.get(lastMessage.sender).username;
+        if (lastMessage.sender === userInfo._id) sender = "You";
+        previewChatDiv.textContent = sender + ": " + lastMessage.content;
+    } else {
+        previewChatDiv.textContent = "No message found..."
+    }
 
     newChatDiv.appendChild(usernameLabelDiv);
     newChatDiv.appendChild(previewChatDiv);
 
-
     newChatDiv.addEventListener('click', (e) => {
-        currentConversationID = conversationID;
-        let req = {
-            conversationID: conversationID,
-            requester: userInfo._id
-        }
-        socket.emit('request-conversation', req);
+        if (shortConversationDivs.has(currentConversationID))
+            shortConversationDivs.get(currentConversationID).classList.remove('short-conversation-selected');
+
+        findListDiv.replaceChildren();
+        findTextfield.value = '';
+
+        currentConversationID = conversation._id;
+        newChatDiv.classList.add('short-conversation-selected');
         messageArea.replaceChildren();
+
+        let messages = conversations.get(conversation._id);
+        messages.forEach(message => {
+            appendMessage(message);
+        });
     })
 }
 
 
-socket.on(('response-conversation'), (messages) => {
-    if (messages.length > 0) {
-        if (messages[0].conversationID === currentConversationID) {
-            messages.forEach(message => {
-                let msg;
-                if (userInfo._id === message.sender) {
-                    msg = {
-                        sender: userInfo.username,
-                        content: message.content
-                    }
-                } else {
-                    msg = {
-                        sender: message.sender,
-                        content: message.content
-                    }
-                }
-                appendMessage(msg);
-            });
-        }
-    }
+socket.on(('response-conversation'), (data) => {
+    let messages = data.messages;
+    let conversation = data.conversation;
+    let users = data.users;
+    users.forEach(user => {
+        usersList.set(user._id, user);
+    });
+    conversationInfos.set(conversation._id, conversation);
+    conversations.set(conversation._id, messages);
+    initConversationsList(conversation._id);
 })
 
-let currentConversationID = 1;
+function appendMessage(message) {
+    let msgFullDiv = document.createElement('div');
+    let mainDiv = document.createElement('div');
+    mainDiv.classList.add('msg-rcv');
+    msgFullDiv.appendChild(mainDiv);
 
-function appendMessage(msg) {
-    var mainDiv = document.createElement('div');
-    mainDiv.classList.add('message', 'bot-message');
-    if (msg.sender === userInfo._id)
-        mainDiv.textContent = "You: " + msg.content;
-    else mainDiv.textContent = msg.sender + ": " + msg.content;
-    messageArea.appendChild(mainDiv);
+    let msg;
+    if (userInfo._id === message.sender) {
+        msg = {
+            sender: userInfo.username,
+            content: message.content
+        }
+        msgFullDiv.classList.add('msg-send-full-line');
+    } else {
+        msg = {
+            sender: usersList.get(message.sender).username,
+            content: message.content
+        }
+        msgFullDiv.classList.add('msg-rcv-full-line');
+    }
+
+    let senderLabel = document.createElement('div');
+    let contentText = document.createElement('div');
+    senderLabel.textContent = msg.sender;
+    senderLabel.classList.add('sender-label');
+    contentText.textContent = msg.content;
+    mainDiv.appendChild(senderLabel);
+    mainDiv.appendChild(contentText);
+
+    messageArea.appendChild(msgFullDiv);
     messageArea.scrollTop = messageArea.scrollHeight;
 }
 
@@ -113,28 +199,23 @@ fetch('/api/chat', {
             .then(function (data) {
                 if (response.status === 200) {
                     userInfo = data;
-                    console.log(usernameDiv);
-                    usernameDiv.textContent = userInfo.username;
+                    usernameDiv.textContent = "Account: " + userInfo.username;
                     socket.emit('add-user', userInfo._id);
                     data.conversation.forEach(conversationID => {
                         if (!conversationIDList.includes(conversationID)) {
                             socket.emit('join-room', 'room-' + conversationID);
+                            let req = {
+                                conversationID: conversationID,
+                                requester: userInfo._id
+                            }
+                            socket.emit('request-conversation', req);
                             socket.on('room-' + conversationID + 'message', (message) => {
-                                let msg;
-                                if (userInfo._id === message.sender) {
-                                    msg = {
-                                        sender: userInfo.username,
-                                        content: message.content
-                                    }
-                                } else {
-                                    msg = {
-                                        sender: message.sender,
-                                        content: message.content
-                                    }
-                                }
-                                appendMessage(msg);
+                                conversations.get(conversationID).push(message);
+                                conversationInfos.get(conversationID).lastUpdated = message.dateTime;
+                                initShortConversation(conversationID);
+                                if (conversationID == currentConversationID)
+                                    appendMessage(message);
                             });
-                            createNewChat(conversationID);
                         }
                     });
                 } else {
@@ -169,7 +250,6 @@ findTextfield.addEventListener('keyup', (e) => {
                 response.json()
                     .then(function (data) {
                         if (response.status === 200) {
-                            console.log(data);
                             data.forEach(user => {
                                 appendFoundUser(user);
                             });
@@ -206,10 +286,13 @@ function appendFoundUser(user) {
                 response.json()
                     .then(function (data) {
                         if (response.status === 200) {
-                            console.log(data);
-                            if (!conversationIDList.includes(data._id)) {
-                                createNewChat(data._id);
-                                currentConversationID = data.id;
+                            let conversation = data.conversation;
+                            if (!conversationIDList.includes(conversation._id)) {
+                                currentConversationID = conversation._id;
+                                conversationInfos.set(conversation._id, conversation);
+                                conversations.set(conversation._id, []);
+                                initConversationsList(conversation._id);
+                                socket.emit('join-room', 'room-' + conversation._id);
                             } else {
 
                             }

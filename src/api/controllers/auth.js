@@ -82,7 +82,7 @@ export const requestRefreshToken = async (req, res) => {
     try {
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY);
 
-        const user = await User.findById(decoded.id);
+        const user = await User.findOne(decoded.id);
 
         if (!user) throw new HttpException(404, "User not found");
 

@@ -19,7 +19,7 @@ export const addChat = async (req, res) => {
     if (!conversation) {
         conversation = await Conversation.create({
             users: users,
-            lastUpdated: ""
+            lastUpdated: new Date().toISOString()
         });
         await User.findOneAndUpdate({
                 username: foundUser.username
@@ -32,7 +32,7 @@ export const addChat = async (req, res) => {
             })
             .then((updatedUser) => {
                 if (updatedUser) {
-                    console.log("User updated successfully:", updatedUser);
+                    console.log("User updated successfully!");
                 } else {
                     console.log("User not found");
                 }
